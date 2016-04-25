@@ -1,10 +1,10 @@
-Overview
---------
+*Overview*
+----------
 
 This project investigates the exponential distribution in R and compares it with the Central Limit Theorem.
 
-Simulations
------------
+*Simulations*
+-------------
 
 This research sets labmda to 0.2 and investigates the distribution of averages of 40 exponentials. We will run 1000 simulations in this case. Here we only show the first two simulations.
 
@@ -37,8 +37,8 @@ head(sims, 2)
     ## [1,]  0.8539713 5.835020  8.970728 2.751601  4.19277
     ## [2,] 15.5183636 4.283506 15.274306 4.989497 18.79061
 
-Sample Mean versus Theoretical Mean
------------------------------------
+*Sample Mean versus Theoretical Mean*
+-------------------------------------
 
 Theoretical mean:
 
@@ -69,39 +69,39 @@ legend("topright", legend = c("Theoretical", "Sample"), col = c("red", "blue"), 
 
 From the results, we can see that the mean of sample means we get from simulations is almost the same as our theoretical mean. Thus, in a hypothesis test, we cannot reject the null hypothesis that they are equal.
 
-Sample Variance versus Theoretical Variance
--------------------------------------------
+*Sample Variance versus Theoretical Variance*
+---------------------------------------------
 
-Theoretical standard deviation:
+Theoretical variance:
 
 ``` r
-1/lambda
+1/((lambda^2)*n)
 ```
 
-    ## [1] 5
+    ## [1] 0.625
 
 Sample variance:
 
 ``` r
-sim.sd <- apply(sims, 1, sd)
-mean(sim.sd)
+sim.var <- apply(sims, 1, var)/n
+mean(sim.var)
 ```
 
-    ## [1] 4.834523
+    ## [1] 0.6088275
 
 ``` r
-hist(sim.sd)
-abline(v = 1/lambda, col = "red", lwd = 2)
-abline(v = mean(sim.sd), col = "blue", lwd = 2)
+hist(sim.var)
+abline(v = 1/lambda^2, col = "red", lwd = 2)
+abline(v = mean(sim.var), col = "blue", lwd = 2)
 legend("topright", legend = c("Theoretical", "Sample"), col = c("red", "blue"), lty = 1)
 ```
 
 ![](Statistical_Inference_Course_Project_-_Part_1_files/figure-markdown_github/unnamed-chunk-7-1.png)<!-- -->
 
-From the results, we can see that the mean of sample standard deviation we get from simulations is almost the same as our theoretical standard deviation. Thus, in a hypothesis test, we cannot reject the null hypothesis that they are equal.
+From the results, we can see that the mean of sample variance we get from simulations is almost the same as our theoretical variance. Thus, in a hypothesis test, we cannot reject the null hypothesis that they are equal.
 
-Distribution
-------------
+*Distribution*
+--------------
 
 The distribution of a large collection of random exponentials (n = 1000)
 
