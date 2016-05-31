@@ -77,35 +77,12 @@ dim(training); dim(testing)
 
     ## [1] 5885   53
 
-### Preprocess using PCA
-
-We use PCA to find out weighted combinations of predictors that can capture 95% of the variance. In this way, we can reduce the number of predictors and noise.
-
-``` r
-data.prepro <- preProcess(select(training, -classe), method="pca")
-data.prepro
-```
-
-    ## Created from 13737 samples and 52 variables
-    ## 
-    ## Pre-processing:
-    ##   - centered (52)
-    ##   - ignored (0)
-    ##   - principal component signal extraction (52)
-    ##   - scaled (52)
-    ## 
-    ## PCA needed 26 components to capture 95 percent of the variance
-
-``` r
-trainPC <- predict(data.prepro, training)
-```
-
 ### Apply Random Forest Model
 
-We choose to apply random forest model on the preprocessed data
+We choose to apply random forest model on the preprocessed data. We can see that the model has a very low out of sample error, which is around 1%.
 
 ``` r
-mod.fit1 <- train(classe ~ ., data=trainPC, method="rf",
+mod.fit1 <- train(classe ~ ., data=training, method="rf",
                   trControl=trainControl(method="cv", number=3))
 mod.fit1
 ```
@@ -113,7 +90,7 @@ mod.fit1
     ## Random Forest 
     ## 
     ## 13737 samples
-    ##    26 predictor
+    ##    52 predictor
     ##     5 classes: 'A', 'B', 'C', 'D', 'E' 
     ## 
     ## No pre-processing
@@ -122,62 +99,60 @@ mod.fit1
     ## Resampling results across tuning parameters:
     ## 
     ##   mtry  Accuracy   Kappa    
-    ##    2    0.9586518  0.9476811
-    ##   14    0.9567591  0.9452883
-    ##   26    0.9517362  0.9389291
+    ##    2    0.9866055  0.9830533
+    ##   27    0.9879158  0.9847130
+    ##   52    0.9837665  0.9794649
     ## 
     ## Accuracy was used to select the optimal model using  the largest value.
-    ## The final value used for the model was mtry = 2.
+    ## The final value used for the model was mtry = 27.
 
 ### Check the accuracy on testing data
 
 ``` r
-testPC <- predict(data.prepro, testing)
-pred1 <- predict(mod.fit1, testPC)
-confusionMatrix(pred1, testPC$classe)
+pred1 <- predict(mod.fit1, testing)
+confusionMatrix(pred1, testing$classe)
 ```
 
     ## Confusion Matrix and Statistics
     ## 
     ##           Reference
     ## Prediction    A    B    C    D    E
-    ##          A 1660   21    1    3    0
-    ##          B    5 1097   18    2    5
-    ##          C    6   21  999   35    9
-    ##          D    1    0    8  923    3
-    ##          E    2    0    0    1 1065
+    ##          A 1672    8    0    0    0
+    ##          B    0 1129    8    0    0
+    ##          C    0    2 1012   13    1
+    ##          D    0    0    6  949    3
+    ##          E    2    0    0    2 1078
     ## 
     ## Overall Statistics
     ##                                           
-    ##                Accuracy : 0.976           
-    ##                  95% CI : (0.9718, 0.9798)
+    ##                Accuracy : 0.9924          
+    ##                  95% CI : (0.9898, 0.9944)
     ##     No Information Rate : 0.2845          
     ##     P-Value [Acc > NIR] : < 2.2e-16       
     ##                                           
-    ##                   Kappa : 0.9697          
-    ##  Mcnemar's Test P-Value : 2.068e-07       
+    ##                   Kappa : 0.9903          
+    ##  Mcnemar's Test P-Value : NA              
     ## 
     ## Statistics by Class:
     ## 
     ##                      Class: A Class: B Class: C Class: D Class: E
-    ## Sensitivity            0.9916   0.9631   0.9737   0.9575   0.9843
-    ## Specificity            0.9941   0.9937   0.9854   0.9976   0.9994
-    ## Pos Pred Value         0.9852   0.9734   0.9336   0.9872   0.9972
-    ## Neg Pred Value         0.9967   0.9912   0.9944   0.9917   0.9965
+    ## Sensitivity            0.9988   0.9912   0.9864   0.9844   0.9963
+    ## Specificity            0.9981   0.9983   0.9967   0.9982   0.9992
+    ## Pos Pred Value         0.9952   0.9930   0.9844   0.9906   0.9963
+    ## Neg Pred Value         0.9995   0.9979   0.9971   0.9970   0.9992
     ## Prevalence             0.2845   0.1935   0.1743   0.1638   0.1839
-    ## Detection Rate         0.2821   0.1864   0.1698   0.1568   0.1810
-    ## Detection Prevalence   0.2863   0.1915   0.1818   0.1589   0.1815
-    ## Balanced Accuracy      0.9928   0.9784   0.9795   0.9775   0.9918
+    ## Detection Rate         0.2841   0.1918   0.1720   0.1613   0.1832
+    ## Detection Prevalence   0.2855   0.1932   0.1747   0.1628   0.1839
+    ## Balanced Accuracy      0.9985   0.9948   0.9915   0.9913   0.9977
 
-### Quiz (19/20)
+### Quiz (20/20)
 
 ``` r
 testing.processed2 <- select(testing.f, -zero.cov.index) %>%
         select(-na.index) %>%
         select(-(X:num_window))
-testPC.f <- predict(data.prepro, testing.processed2)
-predict(mod.fit1, testPC.f)
+predict(mod.fit1, testing.processed2)
 ```
 
-    ##  [1] B A B A A B D B A A B C B A E E A B B B
+    ##  [1] B A B A A E D B A A B C B A E E A B B B
     ## Levels: A B C D E

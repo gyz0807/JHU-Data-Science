@@ -142,6 +142,7 @@ dim(training.f); dim(testing.f)</code></pre>
 </div>
 <div id="remove-zero-covariates" class="section level3">
 <h3>Remove zero covariates</h3>
+<p>Zero covariates are poor predictors because of their low variability, so we remove them from the original dataset to reduce the size of the data.</p>
 <pre class="r"><code>zero.cov.index &lt;- nearZeroVar(subset(training.f, select=-classe))
 training.processed &lt;- training.f[,-zero.cov.index]
 dim(training.processed)</code></pre>
@@ -149,6 +150,7 @@ dim(training.processed)</code></pre>
 </div>
 <div id="remove-variables-with-more-than-80-of-nas" class="section level3">
 <h3>Remove variables with more than 80% of NAs</h3>
+<p>Variables with more than 80% of NAs can hardly be good predictors, so we remove them from the original dataset to reduce the size of the data.</p>
 <pre class="r"><code>na.prop &lt;- apply(is.na(training.processed), 2, function(x){sum(x)/nrow(training.processed)})
 na.index &lt;- unname(which(na.prop &gt; 0.8))
 training.processed1 &lt;- training.processed[, -na.index]
@@ -157,9 +159,8 @@ dim(training.processed1)</code></pre>
 </div>
 <div id="manually-unselect-some-variables" class="section level3">
 <h3>Manually unselect some variables</h3>
-<pre class="r"><code># We don't need a user name for general predictions
-# We don't need a specific time for general predictions
-training.processed2 &lt;- training.processed1 %&gt;%
+<p>We don’t need a user name or a specific time for generalized predictions, so we remove related variables from the data set.</p>
+<pre class="r"><code>training.processed2 &lt;- training.processed1 %&gt;%
         select(-(X:num_window))</code></pre>
 </div>
 <div id="create-training-and-testing-data-sets" class="section level3">
@@ -171,30 +172,16 @@ dim(training); dim(testing)</code></pre>
 <pre><code>## [1] 13737    53</code></pre>
 <pre><code>## [1] 5885   53</code></pre>
 </div>
-<div id="preprocess-using-pca" class="section level3">
-<h3>Preprocess using PCA</h3>
-<pre class="r"><code>data.prepro &lt;- preProcess(select(training, -classe), method=&quot;pca&quot;)
-data.prepro</code></pre>
-<pre><code>## Created from 13737 samples and 52 variables
-## 
-## Pre-processing:
-##   - centered (52)
-##   - ignored (0)
-##   - principal component signal extraction (52)
-##   - scaled (52)
-## 
-## PCA needed 25 components to capture 95 percent of the variance</code></pre>
-<pre class="r"><code>trainPC &lt;- predict(data.prepro, training)</code></pre>
-</div>
 <div id="apply-random-forest-model" class="section level3">
 <h3>Apply Random Forest Model</h3>
-<pre class="r"><code>mod.fit1 &lt;- train(classe ~ ., data=trainPC, method=&quot;rf&quot;,
+<p>We choose to apply random forest model on the preprocessed data. We can see that the model has a very low out of sample error, which is around 1%.</p>
+<pre class="r"><code>mod.fit1 &lt;- train(classe ~ ., data=training, method=&quot;rf&quot;,
                   trControl=trainControl(method=&quot;cv&quot;, number=3))
 mod.fit1</code></pre>
 <pre><code>## Random Forest 
 ## 
 ## 13737 samples
-##    25 predictor
+##    52 predictor
 ##     5 classes: 'A', 'B', 'C', 'D', 'E' 
 ## 
 ## No pre-processing
@@ -203,57 +190,55 @@ mod.fit1</code></pre>
 ## Resampling results across tuning parameters:
 ## 
 ##   mtry  Accuracy   Kappa    
-##    2    0.9633831  0.9536810
-##   13    0.9567587  0.9453019
-##   25    0.9507891  0.9377483
+##    2    0.9899539  0.9872917
+##   27    0.9895902  0.9868318
+##   52    0.9842762  0.9801112
 ## 
 ## Accuracy was used to select the optimal model using  the largest value.
 ## The final value used for the model was mtry = 2.</code></pre>
 </div>
 <div id="check-the-accuracy-on-testing-data" class="section level3">
 <h3>Check the accuracy on testing data</h3>
-<pre class="r"><code>testPC &lt;- predict(data.prepro, testing)
-pred1 &lt;- predict(mod.fit1, testPC)
-confusionMatrix(pred1, testPC$classe)</code></pre>
+<pre class="r"><code>pred1 &lt;- predict(mod.fit1, testing)
+confusionMatrix(pred1, testing$classe)</code></pre>
 <pre><code>## Confusion Matrix and Statistics
 ## 
 ##           Reference
 ## Prediction    A    B    C    D    E
-##          A 1664   12    1    2    1
-##          B    6 1107   11    0    6
-##          C    4   17  999   40   11
-##          D    0    0   15  918    2
-##          E    0    3    0    4 1062
+##          A 1670    6    0    0    0
+##          B    4 1132    8    0    0
+##          C    0    1 1017   22    2
+##          D    0    0    1  942    1
+##          E    0    0    0    0 1079
 ## 
 ## Overall Statistics
 ##                                           
-##                Accuracy : 0.9771          
-##                  95% CI : (0.9729, 0.9807)
+##                Accuracy : 0.9924          
+##                  95% CI : (0.9898, 0.9944)
 ##     No Information Rate : 0.2845          
 ##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16       
 ##                                           
-##                   Kappa : 0.971           
+##                   Kappa : 0.9903          
 ##  Mcnemar's Test P-Value : NA              
 ## 
 ## Statistics by Class:
 ## 
 ##                      Class: A Class: B Class: C Class: D Class: E
-## Sensitivity            0.9940   0.9719   0.9737   0.9523   0.9815
-## Specificity            0.9962   0.9952   0.9852   0.9965   0.9985
-## Pos Pred Value         0.9905   0.9796   0.9328   0.9818   0.9935
-## Neg Pred Value         0.9976   0.9933   0.9944   0.9907   0.9958
+## Sensitivity            0.9976   0.9939   0.9912   0.9772   0.9972
+## Specificity            0.9986   0.9975   0.9949   0.9996   1.0000
+## Pos Pred Value         0.9964   0.9895   0.9760   0.9979   1.0000
+## Neg Pred Value         0.9990   0.9985   0.9981   0.9955   0.9994
 ## Prevalence             0.2845   0.1935   0.1743   0.1638   0.1839
-## Detection Rate         0.2828   0.1881   0.1698   0.1560   0.1805
-## Detection Prevalence   0.2855   0.1920   0.1820   0.1589   0.1816
-## Balanced Accuracy      0.9951   0.9835   0.9794   0.9744   0.9900</code></pre>
+## Detection Rate         0.2838   0.1924   0.1728   0.1601   0.1833
+## Detection Prevalence   0.2848   0.1944   0.1771   0.1604   0.1833
+## Balanced Accuracy      0.9981   0.9957   0.9930   0.9884   0.9986</code></pre>
 </div>
-<div id="quiz-1920" class="section level3">
-<h3>Quiz (19/20)</h3>
+<div id="quiz-2020" class="section level3">
+<h3>Quiz (20/20)</h3>
 <pre class="r"><code>testing.processed2 &lt;- select(testing.f, -zero.cov.index) %&gt;%
         select(-na.index) %&gt;%
         select(-(X:num_window))
-testPC.f &lt;- predict(data.prepro, testing.processed2)
-predict(mod.fit1, testPC.f)</code></pre>
+predict(mod.fit1, testing.processed2)</code></pre>
 <pre><code>##  [1] B A B A A E D B A A B C B A E E A B B B
 ## Levels: A B C D E</code></pre>
 </div>
